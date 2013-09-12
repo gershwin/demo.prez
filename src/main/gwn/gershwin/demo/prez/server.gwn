@@ -1,0 +1,29 @@
+(ns gershwin.demo.prez.server
+  (:require [compojure.core :refer [defroutes GET]]
+            [compojure.handler :as handler]
+            [compojure.route :as route]
+            [ring.util.response :as resp]
+            [ring.server.standalone :refer [serve]]))
+
+;; Since Compojure and the Ring server infrastructure expect
+;; to be able to reference a var, we'll do the interop directly.
+
+(defroutes app-routes
+  (GET "/" [] (resp/redirect "/index.html"))
+  (route/resources "/")
+  (route/not-found "Resource Not Found"))
+
+(def app
+  (handler/site app-routes))
+
+: start-prez [options --]
+  app serve apply2 .
+
+(comment
+  {:port 2345} start-prez
+)
+
+: stop-prez [server --]
+  #(.stop %) apply
+  ;; nil is returned when server is stopped successfully
+  < "Server successfully stopped." println > when-not .

@@ -1,0 +1,5 @@
+: keep [..a x quot -> ( ..a x -- ..b ) -- ..b x]
+  over < invoke > dip .
+
+: times-two [n -- n]
+  dup swap 2 * .

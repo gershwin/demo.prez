@@ -1,0 +1,23 @@
+/* For built-in word definitions */
+.title .keyword {
+    color: #900;
+    font-weight: bold;
+}
+
+/* For Gershwin quotations, e.g.: < 42 + > */
+.quotation {
+    color: #009926;
+}
+
+h1.text,
+h2.text,
+h3.text,
+h4.text,
+h5.text,
+h6.text {
+    color: #383D3D;
+}
+
+ul.no-dots {
+    list-style: none;
+}

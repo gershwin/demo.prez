@@ -1,0 +1,13 @@
+/** Customizations to Print Stylesheet **/
+
+.reveal.center,
+.reveal.center .slides,
+.reveal.center .slides section {
+	min-height: 200px !important;
+}
+
+.reveal.center h1,
+.reveal.center h2,
+.reveal.center h3 {
+    margin-top: 300px;
+}

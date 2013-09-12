@@ -1,0 +1,45 @@
+(ns gershwin.demo.prez.html
+  (:require [gershwin.java.io :as io]
+            [hiccup.core :as hiccup]
+            [hiccup.page :as hiccup-page]
+            [markdown.core :refer [md-to-html-string]]))
+
+: html "Gershwin wrapper word for hiccup.core/html macro."
+  [x -- s]
+  (hiccup/html (pop-it)) .
+
+: html2
+  [x y -- s]
+  (let [b (pop-it)
+        a (pop-it)]
+    (hiccup/html a b)) .
+
+: html*
+  [xs -- s]
+  `(hiccup/html ~@(pop-it)) (eval (pop-it)) .
+
+: section [content-v -- html]
+  :section swap cons vec html .
+
+: slide [content-v -- html] section .
+
+: slide-stack [quot-of-slides -- html] wrap slide .
+
+: md [s -- s] (ap md-to-html-string) .
+
+: code-block [codes tag -- code-block]
+  swap cons vec [:pre] conj html .
+
+: code [codes -- code-block]
+  :code code-block .
+
+: code-clj [codes -- code-block]
+  :code.clj code-block .
+
+: code-resource [name -- s]
+  "code/" swap str2
+  io/resource dup
+  #[ slurp ] #[ "" ] if .
+
+: html-presentation [quot-of-slides -- html]
+  wrap #[ html2 ] reduce .

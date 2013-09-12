@@ -1,0 +1,86 @@
+(ns ^{:doc "Utilities for generating HTML markup that supports syntax highlighting Gershwin code examples."}
+  gershwin.demo.prez.gershwin
+  (:require [hiccup.core :as hiccup]
+            [gershwin.string :as str])
+  (:require-words [gershwin.demo.prez.html :refer [html]]))
+
+: gwn-suffixed? [s -- ?] "__GWN__" swap ends-with? .
+
+: de-gwn "Take a Gershwin-suffixed symbol, remove the suffix, return name of symbol as string."
+  [x -- s]
+  str
+  dup gwn-suffixed?
+  #[
+    dup count 7 -
+    0 swap rot substring
+    ] when .
+
+: de-regex [x -- s]
+  str
+  "+" "\\+" str/replace
+  "*" "\\*" str/replace
+  "?" "\\?" str/replace .
+
+: gwn-markup-word-defs "Generate HTML output for a Gershwin word definition."
+  [code -- markup]
+  #"(?s)(:\s+)([^\s]+)\s+(\[[^\]]*\])(.*?)( ;)"
+  [:span.function
+   [:span.keyword "$1"]
+   [:span.title "$2 "]
+   [:span.prompt "$3"]
+   "$4"
+   [:span.keyword "$5"]] html str/replace .
+
+: word-pattern "Pattern for matching against a specific word or syntactic form with proper word (space) boundaries."
+  [words word]
+  ;; Check for #[ and ] in coll of words
+  swap ["#[" "]"] swap has-any?
+  ;; Match boundaries differently based on their presence
+  #[ swap "(\\s" swap "\\s)" str3 ]
+  #[ swap "\\b(" swap ")\\b" str3 ] if .
+
+: quotations "Gershwin quotation syntax."
+  [-- coll]
+  ["]" "#["] .
+
+: quotation-replacement "Replacement pattern for quotation syntax"
+  [-- s]
+  [:span.quotation "$1"] html .
+
+: builtins "Builtin Gershwin words that should be highlighted."
+  [-- coll]
+ 'gershwin.core ns-publics keys sort
+  #[ de-regex ] map
+  #[ de-gwn ]   map .
+
+: builtin-replacement "Replacement pattern for builtin language forms"
+  [-- s]
+  [:span.keyword "$1"] html .
+
+: replace-builtins
+  [code -- s]
+  builtins swap
+  #[
+    "\\b(" swap ")\\b" str3 re-pattern
+    builtin-replacement
+    str/replace
+  ] reduce-with .
+
+: replace-quotations
+  [code -- s]
+  quotations swap
+  #[
+    "(\\s" swap "\\s)" str3 re-pattern
+    quotation-replacement
+    str/replace
+  ] reduce-with .
+
+: gwn-markup "@todo Get quotation replacement working"
+  [code -- code-markup]
+  gwn-markup-word-defs
+  replace-builtins .
+
+: code-gwn
+  [code -- code-markup]
+  gwn-markup [:code.python] conj
+  [:pre] conj .

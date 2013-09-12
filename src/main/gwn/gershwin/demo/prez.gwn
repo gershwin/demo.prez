@@ -1,0 +1,124 @@
+(ns gershwin.demo.prez
+  (:require [gershwin.demo.prez.server :as server]
+            [hiccup.core :refer [html]]
+            [hiccup.page :refer [html5 include-js include-css]]
+            [clojure.java.io :as io]
+            [clojure.string :as str])
+  (:require-words [gershwin.demo.prez.html :refer [html html2 html* html-presentation]]
+                  [gershwin.demo.prez.gershwin :refer [code-gwn]])
+  (:gen-class))
+
+(def ^{:doc "When true, the presentation will be 'compiled' to a single, standalone index.html file that can be viewed offline."
+       :dynamic true}
+  *compile-prez* true)
+
+(defn css-resource
+  "Slurp a resource off the classpath under public/css"
+  [^String resource-name]
+  (when-let [res (io/resource (str "public/css/" resource-name))]
+    (slurp res)))
+
+(defn js-resource
+  "Slurp a resource off the classpath under public/js"
+  [^String resource-name]
+  (when-let [res (io/resource (str "public/js/" resource-name))]
+    (slurp res)))
+
+(defn inc-css*
+  "Build a raw <style> tag with inline css for the given CSS resource"
+  [r]
+  (let [content (css-resource r)]
+    [:style content]))
+
+(defn inc-css
+  "Depending on value of *compile-prez*, either include links to CSS files or include them inline."
+  [& resources]
+  (if *compile-prez*
+    (html (map inc-css* resources))
+    (apply include-css
+           (map #(str "css/" %) resources))))
+
+(defn inc-print-css
+  "Include a CSS stylesheet for print media. Depending on value of *compile-prez*, either includes a link to the CSS file or inlines it."
+  [r]
+  (if *compile-prez*
+    (html [:style {:media "print"} (css-resource r)])
+    (html [:link {:type "text/css"
+                  :src (str "css/" r)
+                  :media "print"}])))
+
+(defn inc-js*
+  "Build a raw <script> tag with inline JS for the given JS resource"
+  [r]
+  (let [content (js-resource r)]
+    [:script {:type "text/javascript"} content]))
+
+(defn inc-js
+  "Depending on the value of *compile-prez*, either include links to the JS files or include them inline."
+  [& resources]
+  (if *compile-prez*
+    (html (map inc-js* resources))
+    (apply include-js
+           (map #(str "js/" %) resources))))
+
+: reveal "Entry-point for creating a Reveal.js presentation. Provides the HTML skeleton required to run a Reveal.js presentation. Expects an initial object of options, supportig keys :title, :description. The rest args `content` should be Hiccup-compatible content that includes the actual slides of the presentation."
+  [spec content-str -- html]
+  (let [content (pop-it)
+        {:keys [title description]} (pop-it)]
+    (html5
+     [:head
+      [:meta {:charset "utf-8"}]
+      [:meta {:name "author" :content "Daniel Gregoire"}]
+      [:meta {:name "description" :content description}]
+      [:meta {:name "apple-mobile-web-app-capable" :content "yes"}]
+      [:meta {:name "apple-mobile-web-app-status-bar-style" :content "black-translucent"}]
+      [:meta {:name "viewport" :content "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"}]
+      [:title title]
+      (inc-css "reveal.min.css"
+               ;; Reveal themes: beige, simple, solarized, moon, night, default, serif, sky
+               "theme/serif.css"
+               ;; Highlight themes: arta ascetic brown_paper brown_papersq.png dark default docco far foundation github googlecode idea ir_black magula mono-blue monokai monokai_sublime obsidian pojoaque pojoaque.jpg railscasts rainbow school_book school_book.png solarized_dark solarized_light sunburst tomorrow tomorrow-night-blue tomorrow-night-bright tomorrow-night tomorrow-night-eighties vs xcode zenburn
+               "lib/highlight/github.css"
+               "app.css")
+      (inc-js "lib/jquery-2.0.0.min.js"
+              "lib/plugin/highlight/highlight.js")
+      ;; If compiled, it's already like having a PDF, so just provide
+      ;; basic "paper" print stylesheet.
+      (if *compile-prez*
+        (inc-print-css "print/paper.css")
+        [:script {:type "text/javascript"}
+         "document.write( '<link rel=\"stylesheet\" href=\"css/print/' + ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) + '.css\" type=\"text/css\" media=\"print\">' );"])
+      (str "<!--[if lt IE 9]>"
+           (inc-js "lib/html5shiv.js")
+           "<![endif]-->")]
+       [:body
+        [:div.reveal
+         [:div.slides
+          content]]
+        (inc-js "lib/head.min.js"
+                "reveal-2.4.0.js"
+                "app.js")])) .
+
+: build-prez [opts slides -- prez] html-presentation reveal .
+
+: built-dir [-- dir] (java.io.File. "target/classes/public") .
+
+: built-dir* [-- dir]
+  (java.io.File. "/home/semperos/dev/gershwin/demo.prez/target/classes/public") .
+
+: exists? [f-or-dir -- ?] #(.exists %) call .
+
+: mkdir [dir -- nil] #(.mkdirs %) call .
+
+: built-file [dir -- f] #(java.io.File. (str % "/index.html")) call .
+
+: delete-prez []
+  built-dir* built-file #(.delete %) apply .
+
+: write-prez [opts slides --]
+  built-dir* dup built-file
+  ;; check if target directories exist
+  swap dup exists?
+  ;; make them if they don't
+  #[ mkdir ] #[ drop ] if-not
+  build-prez swap spit .
