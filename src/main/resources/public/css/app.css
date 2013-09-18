@@ -21,3 +21,11 @@ h6.text {
 ul.no-dots {
     list-style: none;
 }
+
+.faint {
+  opacity: 0.75;
+}
+
+.fainter {
+  opacity: 0.5;
+}

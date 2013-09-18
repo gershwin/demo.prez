@@ -79,6 +79,7 @@
                "theme/serif.css"
                ;; Highlight themes: arta ascetic brown_paper brown_papersq.png dark default docco far foundation github googlecode idea ir_black magula mono-blue monokai monokai_sublime obsidian pojoaque pojoaque.jpg railscasts rainbow school_book school_book.png solarized_dark solarized_light sunburst tomorrow tomorrow-night-blue tomorrow-night-bright tomorrow-night tomorrow-night-eighties vs xcode zenburn
                "lib/highlight/github.css"
+               "bootstrap.min.css"
                "app.css")
       (inc-js "lib/jquery-2.0.0.min.js"
               "lib/plugin/highlight/highlight.js")
@@ -96,7 +97,7 @@
          [:div.slides
           content]]
         (inc-js "lib/head.min.js"
-                "reveal-2.4.0.js"
+                "reveal-2.5.0.min.js"
                 "app.js")])) .
 
 : build-prez [opts slides -- prez] html-presentation reveal .
